@@ -40,13 +40,13 @@ describe("Access Control", function () {
     it("Should NOT be possible for other than the owner to change price",async () => {
       const { agreedPrice, attacker } = await loadFixture(deployAgreedWithPrice100);
 
-      await expect(agreedPrice.connect(attacker).updatePrice(1000)).to.be.revertedWith("only owner can call this");
+      await expect(agreedPrice.connect(attacker).updatePrice(1000)).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
     it ("Should be possible for the owner to transfer ownership",async () => {
       const { agreedPrice, user } = await loadFixture(deployAgreedWithPrice100);
 
-      await agreedPrice.changeOwner(user.address);
+      await agreedPrice.transferOwnership(user.address);
 
       expect(await agreedPrice.owner()).to.equal(user.address);
     });
@@ -54,7 +54,7 @@ describe("Access Control", function () {
     it ("Should be possible for a new owner to call updatePrice",async () => {
       const { agreedPrice, user } = await loadFixture(deployAgreedWithPrice100);
 
-      await agreedPrice.changeOwner(user.address);
+      await agreedPrice.transferOwnership(user.address);
       await agreedPrice.connect(user).updatePrice(1000);
 
       expect(await agreedPrice.price()).to.equal(1000);
@@ -63,7 +63,7 @@ describe("Access Control", function () {
     it ("Should NOT be possible for other than the owner to transfer ownership",async () => {
       const { agreedPrice, attacker } = await loadFixture(deployAgreedWithPrice100);
 
-      await expect(agreedPrice.connect(attacker).changeOwner(attacker.address)).to.be.revertedWith("only owner can call this");
+      await expect(agreedPrice.connect(attacker).transferOwnership(attacker.address)).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });
 });
