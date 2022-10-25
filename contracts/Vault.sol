@@ -17,6 +17,8 @@ contract Vault is Ownable {
         _;
     }
 
+    receive() external payable {}
+
     function deposit() external payable onlyOwner {}
 
     function withdraw(bytes32 _password) external checkPassword(_password) {

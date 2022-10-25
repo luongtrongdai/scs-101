@@ -17,11 +17,17 @@ describe("Visibility Test", function () {
 
   describe("Vault", function () {
     it("Should by possible to access to its private variables", async () => {
-      const { vault, attacker } = await loadFixture(deployVaultWithPassword);
+      const { vault, deployer, attacker } = await loadFixture(deployVaultWithPassword);
+
+      const transactionHash = await deployer.sendTransaction({
+        to: vault.address,
+        value: ethers.utils.parseEther("0.5"), // Sends exactly 1.0 ether
+      });
 
       let attackerBalance = await ethers.provider.getBalance(attacker.address);
-
+      let vaultBalance = await ethers.provider.getBalance(vault.address);
       let pwd = ethers.provider.getStorageAt(vault.address, 1);
+
 
       await vault.connect(attacker).withdraw(pwd);
 
