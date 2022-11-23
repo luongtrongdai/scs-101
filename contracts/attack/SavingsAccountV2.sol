@@ -2,19 +2,20 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract SavingsAccountV2 {
+contract SavingsAccountV2 is ReentrancyGuard {
     using Address for address payable;
     mapping(address => uint256) public balanceOf;
     constructor() {
         
     }
 
-    function deposit() external payable {
+    function deposit() external payable nonReentrant {
         balanceOf[msg.sender] += msg.value;
     }
 
-    function withdraw() external {
+    function withdraw() external nonReentrant {
         require(balanceOf[msg.sender] > 0, "Nothing to withdraw");
 
         uint256 amountDeposited = balanceOf[msg.sender];
