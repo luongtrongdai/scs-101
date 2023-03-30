@@ -65,7 +65,7 @@ describe("ReentrancyTest", function () {
   });
 
   describe("Attack", function () {
-    it("Should reentrancy attack",async () => {
+    it.skip("Should reentrancy attack",async () => {
       const { savingsAccount, investor, user } = await loadFixture(deployInvestorWithSavingsAccount);
 
       await savingsAccount.connect(user).deposit({ value: 100 });

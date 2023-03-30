@@ -2,6 +2,7 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "hardhat/console.sol";
 
 interface ISavingAccount {
   function deposit() external payable;
@@ -31,6 +32,7 @@ contract InvestorV2 is Ownable {
 
   receive() external payable {
     if (address(savingsAccount).balance > 0) {
+      console.log("savingsAccount balance: ", address(savingsAccount).balance);
       savingsAccount.withdraw();
     } else {
       payable(owner()).transfer(address(this).balance);
