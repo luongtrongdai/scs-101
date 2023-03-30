@@ -14,7 +14,7 @@ describe("Tx.origin", function () {
 
     await deployer.sendTransaction({ to: smallWallet.address, value: 10000 });
 
-    const SmallWalletAttacker = await ethers.getContractFactory("SmallWalletAttacker", deployer);
+    const SmallWalletAttacker = await ethers.getContractFactory("SmallWalletAttacker", attacker);
     const smallWalletAttacker = await SmallWalletAttacker.deploy(smallWallet.address);
     
     return {smallWallet, smallWalletAttacker, deployer, attacker, user};
@@ -42,6 +42,19 @@ describe("Tx.origin", function () {
       const { smallWallet, attacker } = await loadFixture(deploySmallWalletWithTxOrigin);
     
       await expect(smallWallet.connect(attacker).withdrawAll(attacker.address)).to.be.revertedWith("Caller not authorized");
+    });
+  });
+
+  describe("Attack", function() {
+    it("Should drain the victim out it smallWallet's owner sends ether",async () => {
+      const { smallWallet, smallWalletAttacker, deployer, attacker } = await loadFixture(deploySmallWalletWithTxOrigin);
+    
+      const initialAttackBalance = await ethers.provider.getBalance(attacker.address);
+
+      await deployer.sendTransaction({ to: smallWalletAttacker.address, value: 1 });
+
+      expect(await ethers.provider.getBalance(smallWallet.address)).to.eq(0);
+      expect(await ethers.provider.getBalance(attacker.address)).to.eq(initialAttackBalance.add(10000));
     });
   });
 });
