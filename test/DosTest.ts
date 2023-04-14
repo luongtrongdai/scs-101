@@ -111,14 +111,36 @@ describe("Dos", function () {
         expect(await auctionv2.currentLeader()).to.eq(user.address);
       });
 
-      // it.skip("Should add current leader and highestBid to prevous refund", async () => {
-      //   const { auctionv2, user, deployer } = await loadFixture(deployAuctionV2WithInitSupply);
+      describe("Pull over push solution", function() {
+        it("User should be able to be refuned for a small number of bids",async () => {
+          const { auctionv2, user } = await loadFixture(deployAuctionV2WithInitSupply);
 
-      //   await auctionv2.connect(user).bid({ value: 150 });
-      //   const [addr, amount] = await auctionv2.refunds(0);
-      //   expect(addr).to.eq(deployer.address);
-      //   expect(amount).to.eq(100);
-      // });
+          await auctionv2.connect(user).bid({ value: ethers.utils.parseEther("3") });
+          await auctionv2.bid({ value: ethers.utils.parseEther("4")});
+
+          const userBalanceBefore = await ethers.provider.getBalance(user.address);
+          await auctionv2.connect(user).withdrawRefund();
+          const userBalanceAfter = await ethers.provider.getBalance(user.address);
+          expect(userBalanceAfter).to.be.gt(userBalanceBefore);
+        });
+
+        it("User should be able to be refuned for a large number of bids",async () => {
+          const { auctionv2, user } = await loadFixture(deployAuctionV2WithInitSupply);
+
+          var value = ethers.utils.parseEther("0.001");
+          for (var i = 0; i < 1500; i++) {
+            await auctionv2.connect(user).bid({ value: value.add(i) });
+          }
+
+          await auctionv2.connect(user).bid({ value: ethers.utils.parseEther("3") });
+          await auctionv2.bid({ value: ethers.utils.parseEther("4")});
+
+          const userBalanceBefore = await ethers.provider.getBalance(user.address);
+          await auctionv2.connect(user).withdrawRefund();
+          const userBalanceAfter = await ethers.provider.getBalance(user.address);
+          expect(userBalanceAfter).to.be.gt(userBalanceBefore);
+        });
+      });
     });
 
     // describe.skip("When calling refundAll", function() {
