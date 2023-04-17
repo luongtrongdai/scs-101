@@ -20,10 +20,10 @@ contract MultiSigWallet {
     }
 
     function transfer(address to, uint256 amount, Signature[2] memory signatures) external {
-        console.log("Start transfer");
+        console.logString("Start transfer");
         // Authenticate check
         require(_verifySignature(to, amount, signatures[0]) == admins[0], "Access restricted");
-        require(_verifySignature(to, amount, signatures[1]) == admins[0], "Access restricted");
+        require(_verifySignature(to, amount, signatures[1]) == admins[1], "Access restricted");
         payable(to).sendValue(amount);
     }
 

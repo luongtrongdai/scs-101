@@ -36,10 +36,10 @@ describe("Replay Attack", function () {
 
     const afterBalance =  await ethers.provider.getBalance(user.address);
 
-    //expect(afterBalance).to.be.eq(beforeBalance.add(amount));
+    expect(afterBalance).to.be.eq(beforeBalance.add(amount));
   });
 
-  it.skip("Should revert if receive other signature", async () => {
+  it("Should revert if receive other signature", async () => {
     const {multiSigWallet, admin1, user, attacker } = await loadFixture(deployMultiSigWalletWithAdminsAccount);
 
     const amount = ethers.utils.parseEther("1");
